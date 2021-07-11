@@ -1,107 +1,141 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 
-data_dict = {}
+def extract_data(country):
+    list_len = len(country)
+    for length in range(0, list_len):
+        if list_len > 3:
+            print("ERR: Sorry, at most 3 countries can be entered.")
+            return False
+        """
+        Checking for availability for country in keys
+        """
+        if country[length] not in emission_dict.keys():
+            print(f"ERR: Sorry “{country[length]}” is not a valid country", end="\n\n")
+            return False
+    else:
+        write_line_csv = list(emission_dict.keys())[0].title() + "," + ",".join(list(emission_dict.values())[0]) + "\n"
+        for num in range(0, len(country)):
+            write_line_csv += country[num].title() + "," + ",".join(
+                emission_dict[country[num]]) + "\n"
 
-with open('./Emissions.csv', mode='r') as csv_data:
-    for data in csv_data.read().split('\n'):
-        data_dict.update({data.split(',')[0] : data.split(',')[1:]})
+        with open('Emissions_subset.csv', 'w') as new_file:
+            new_file.writelines(write_line_csv)
+        print(f"Data successfully extracted for countries " + ", ".join(
+            country).title() + " saved into file Emissions_subset.csv", end="\n\n")
+    return True
 
-#extracting year list
-year_list = (list(data_dict.values()))[0]
-year_list = list(map(int, year_list))
 
-#extracting country names
-country_list = (list(data_dict.keys()))[1:]
+print("A Simple Data Analysis Program")
+print()
 
-#getting year input
-def input_year_fun():
-    global input_year
-    input_year = int(input("Select a year to find statistics (1997 to 2010): "))
-    return input_year
-     
+"""
+Step 1: Using the TRY:EXPECT to Handle the Exception in program
+"""
+
 try:
-    input_year_fun() 
-    while input_year not in year_list:
-        print("Please enter year from 1998 to 2010 only")
-        input_year_fun()
+    emission_dict = {}
+    """
+    Reading the countries in lower case.
+    """
+    with open('Emissions.csv', 'r') as file:
+        for data in file.read().split('\n'):
+            emission_dict.update({data.split(',')[0].lower(): data.split(',')[1:]})
+    print("All data from Emissions.csv has been read into a dictionary.", end="\n\n")
+    """
+    looping until user don't enter expected input
+    """
+    while True:
+        input_year = input("Select a year to find statistics (1997 to 2010): ")
+        if not input_year.isdigit() or not 1997 <= int(input_year) <= 2010:
+            print("Sorry that is not a valid year.")
+            continue
+        else:
+            break
 
-except ValueError as error:
-    print(error)
-    print("Please enter year from 1998 to 2010 only")
-    
-        
-#extracting the index of the year
-year_index = year_list.index(input_year)
+    index_of = int()
+    lines = []
 
+    for item in emission_dict.values():
+        if input_year in item:
+            index_of = (item.index(input_year))
 
-#Creating list of emission in individual year
-single_year_ems = []
-each_year_ems = (list(data_dict.values()))[1:]
+    total = 0
+    i = 0
+    emissions_in_year = []
 
-for i in each_year_ems:
-    single_year_ems.append(float(i[year_index]))
+    for value in emission_dict.values():
+        if i != 0:
+            total += float(value[index_of])
+            emissions_in_year.append(list(emission_dict.values())[i][index_of])
+        i += 1
 
+    max_country_index = int(emissions_in_year.index(str(max(float(str_value) for str_value in emissions_in_year))))
+    min_country_index = int(emissions_in_year.index(str(min(float(str_value) for str_value in emissions_in_year))))
+    average_emissions = total / 195
 
-#Analysis functions
-def find_country(ems_value):
-    ems_index = single_year_ems.index(ems_value)
-    ems_country = country_list[ems_index]
-    return ems_country
+    max_emission = list(emission_dict.keys())[max_country_index + 1]
+    min_emission = list(emission_dict.keys())[min_country_index + 1]
 
-#finding minimum and maximum emission in specific year and it's country name
-min_ems_country = find_country(min(single_year_ems))
-max_ems_country = find_country(max(single_year_ems))
+    print(f'In {input_year}, countries with minimum and maximum CO2 emission levels were: [{min_emission}] '
+          f'and [{max_emission}] respectively.')
+    print(f'Average CO2 emissions in {input_year} were {"%.6f" % round(average_emissions, 6)}')
+    print()
+    """
+    Making it case insensitive and checking for availability for country in keys
+    """
+    while True:
+        visualize_country = input("Select the country to visualize: ").lower()
+        if visualize_country in emission_dict.keys():
+            number = list(emission_dict.keys()).index(visualize_country)
+            plt.plot(list(map(float, list(emission_dict.values())[0])), list(map(float, list(emission_dict.values())[number])))
+            plt.title("Year vs Emissions in Capita")
+            plt.xlabel("Year")
+            plt.ylabel("Emissions in" + visualize_country.title())
+            plt.show()
+            print()
+            break
+        else:
+            print("Sorry that is not a valid Country.")
+            continue
+    """
+    Making it case insensitive and checking for availability for country in keys - Using power of python to get data into two country variable
+    """
+    while True:
+        try:
+            country1, country2 = input("Write two comma-separated countries for which you want to visualize data: ").lower().split(", ")
+        except ValueError:
+            print("Please write up to two comma-separated countries for which you want to visualize data...")
+            continue
+        if country1 not in emission_dict.keys() or country2 not in emission_dict.keys():
+            print("Sorry that is not a valid Country.")
+            continue
+        else:
+            number1 = list(emission_dict.keys()).index(country1)
+            number2 = list(emission_dict.keys()).index(country2)
+            plt.plot(list(map(float, list(emission_dict.values())[0])),
+                     list(map(float, list(emission_dict.values())[number1])), label=country1)
+            plt.plot(list(map(float, list(emission_dict.values())[0])),
+                     list(map(float, list(emission_dict.values())[number2])), label=country2)
+            plt.title("Year vs Emissions in Capita")
+            plt.xlabel("Year")
+            plt.ylabel("Emissions in ")
+            plt.legend()
+            plt.show()
+            print()
+            break
+    """
+    Making it case insensitive
+    """
+    while True:
+        input_string = input("Write up to three comma-separated countries for which you want to extract data: ").lower()
+        input_country = input_string.split(", ")
+        # Looping until user don't enter expected input
+        if not extract_data(input_country):
+            continue
+        else:
+            break
 
-#finding avarage of emission in specific year
-avarage_ems = sum(single_year_ems)/len(single_year_ems)
-
-#Final output:
-print()
-print(f'In {input_year}, countries with minimum and maximum CO2 emission levels were: [{min_ems_country}] and [{max_ems_country}] respectively.')
-print(f'Avarage CO2 emissions in {input_year} were {avarage_ems}')
-print()
-
-
-#getting multiple country input
-multi_input_country = None
-
-def input_country_fun():
-    global multi_input_country
-    input_country = input("Select the countries to compare and visualize data [separate with comma ', ']: ")
-    multi_input_country = list(input_country.split(', '))               #spliting input
-    return multi_input_country    
-
-input_country_fun() 
-
-x_values = year_list
-y_values = [data_dict[i] for i in multi_input_country]                  #fatching emission data of selected countries in list
-y_ems_flt = []
-
-def y_ems_fun():
-    global y
-    for i in y_values:
-        for single_y_ems in i:
-            y_ems_flt.append(float(single_y_ems))                       #converting fatched data from str to float
-    y = [y_ems_flt[i:i + 14] for i in range(0, len(y_ems_flt), 14)]     #creating sublist of 14 entries of each country
-    return y
-
-y_ems_fun()
-
-# ploting data for visualization
-plt.title("Year vs Emissions in capita")
-
-plt.xlabel("Year")
-plt.ylabel(f"Emissions in {multi_input_country[0]} and {multi_input_country[1]}")
-
-df = pd.DataFrame({
-    'x_values': year_list,
-    'y1_values': y[0],
-    'y2_values': y[1]
-})
-
-plt.plot('x_values', 'y1_values', data=df, color='blue', linewidth=2, label=multi_input_country[0])
-plt.plot('x_values', 'y2_values', data=df, color='orange', linewidth=2, label=multi_input_country[1])
-
-plt.legend()
-plt.show()
+except FileNotFoundError:
+    print("File not found....")
+except IOError:
+    print("Output file can’t be saved")
